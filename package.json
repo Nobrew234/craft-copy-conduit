@@ -9,7 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "migrate": "export SUPABASE_URL=$SUPABASE_URL && export SUPABASE_KEY=$SUPABASE_KEY && vite-node src/scripts/migrate.ts"
+    "migrate": "vite-node src/scripts/migrate.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
