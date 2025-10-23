@@ -17,7 +17,7 @@ export default function PromptEditor() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const isNew = id === "new";
+  const isNew = !id || id === "new";
 
   const [formData, setFormData] = useState({
     titulo: "",
