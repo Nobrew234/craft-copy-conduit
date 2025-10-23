@@ -11,6 +11,7 @@ import PromptDetail from "./pages/PromptDetail";
 import PromptEditor from "./pages/PromptEditor";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import Register from "./pages/Register";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/prompt/new" element={<PromptEditor />} />
             <Route path="/prompt/:id" element={<PromptDetail />} />
