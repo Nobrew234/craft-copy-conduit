@@ -1,90 +1,56 @@
-# Plano de Implementação de Backend com Xano 2.0
+# Plano de Integração de Banco de Dados: Supabase e Replit
 
-Este documento descreve o plano passo a passo para configurar um backend no Xano, incluindo a estruturação do banco de dados, autenticação de usuário, segurança da API e diretrizes de integração com o frontend.
+## Fase 1: Configuração e Setup
 
----
+1.  **Criar Projeto no Supabase:**
+    *   Acessar o [Supabase](https://supabase.com/) e criar um novo projeto.
+    *   Guardar a URL da API e a chave `anon` para uso futuro.
 
-### 1. Estrutura do Banco de Dados (PostgreSQL no Xano)
+2.  **Configurar Variáveis de Ambiente no Replit:**
+    *   No Replit, ir para a seção "Secrets".
+    *   Criar duas variáveis: `SUPABASE_URL` e `SUPABASE_KEY`.
+    *   Inserir os valores obtidos no passo anterior.
 
-O primeiro passo é definir e configurar as tabelas necessárias no banco de dados do Xano.
+3.  **Instalar a Biblioteca do Supabase:**
+    *   Executar o comando `npm install @supabase/supabase-js` no terminal do Replit.
 
-**Tabelas a Remover:**
-- `log_de_eventos`
-- `conversa_do_agente`
-- `mensagem_do_agente`
-- `conta`
+## Fase 2: Esquema do Banco de Dados
 
-**Tabela `usuario` (Adaptar):**
-- **id**: UUID (Primary Key)
-- **criado_em**: DateTime
-- **nome**: Texto
-- **email**: Email (Índice único)
-- **senha**: Senha (Hash)
-- **ultimo_login**: DateTime (Opcional)
+1.  **Definir o Esquema:**
+    *   Com base nos dados mockados, definir as tabelas `usuario` e `prompt`.
+    *   Definir os campos e tipos de dados para cada tabela.
 
-**Tabela `prompt` (Criar):**
-- **id**: UUID (Primary Key)
-- **criado_em**: DateTime
-- **usuario_id**: Referência à tabela `usuario` (Chave Estrangeira)
-- **titulo**: Texto
-- **descricao**: Texto (Opcional)
-- **conteudo**: Texto
-- **categoria**: Texto (Opcional)
-- **tags**: JSON (Array de Textos)
-- **template**: Boolean (Default: `false`)
-- **publico**: Boolean (Default: `false`)
+2.  **Criar as Tabelas no Supabase:**
+    *   Usar o editor de SQL no Supabase para criar as tabelas.
+    *   Estabelecer a relação "um para muitos" entre `usuario` e `prompt`.
 
-**Relacionamento:**
-- Um `usuario` pode ter múltiplos `prompts` (One-to-Many).
+## Fase 3: Migração de Dados
 
----
+1.  **Identificar a Fonte de Dados Mockados:**
+    *   Localizar os arquivos no projeto que contêm os dados mockados (ex: `src/data/mocks.ts`).
 
-### 2. Configuração da Autenticação de Usuário
+2.  **Criar um Script de Migração:**
+    *   Criar um novo arquivo (ex: `src/scripts/migrate.ts`).
+    *   O script irá ler os dados mockados e usar o cliente Supabase para inseri-los nas tabelas recém-criadas.
 
-Após a estruturação do banco de dados, o próximo passo é habilitar o sistema de autenticação nativo do Xano.
+## Fase 4: Integração com a API
 
-1.  **Habilitar Autenticação:**
-    - Na tabela `usuario`, acesse `Settings` (...) e ative a opção `Authentication`.
-    - Mapeie a autenticação para os campos `email` e `senha`.
+1.  **Substituir o Uso de Dados Mockados:**
+    *   Refatorar o código para substituir as chamadas aos dados mockados por chamadas à API do Supabase.
+    *   Implementar funções para buscar, criar, atualizar e deletar dados.
 
-2.  **Endpoints Gerados Automaticamente:**
-    - O Xano criará automaticamente os seguintes endpoints de API:
-      - `POST /auth/signup`: Para registrar novos usuários.
-      - `POST /auth/login`: Para autenticar usuários existentes e retornar um `authToken`.
-      - `GET /auth/me`: Para retornar as informações do usuário logado (requer autenticação).
+2.  **Implementar Segurança:**
+    *   Garantir que as políticas de segurança (Row Level Security) do Supabase estejam ativadas.
+    *   Assegurar que um usuário só possa acessar e modificar seus próprios dados.
 
----
+## Fase 5: Testes e Validação
 
-### 3. Proteção dos Endpoints da API (`prompt`)
+1.  **Testar as Operações CRUD:**
+    *   Verificar se todas as operações (criar, ler, atualizar, deletar) estão funcionando como esperado.
 
-Para garantir a segurança e a propriedade dos dados, todos os endpoints da API relacionados a `prompt` devem ser protegidos.
+2.  **Validar a Integridade dos Dados:**
+    *   Confirmar que os dados estão sendo armazenados e recuperados corretamente.
 
-1.  **Exigir Autenticação:**
-    - Em todos os endpoints da API `prompt` (`GET`, `POST`, `PUT`, `DELETE`), acesse as `Settings` do endpoint e defina a autenticação como obrigatória, vinculando-a à tabela `usuario`.
+3.  **Verificar a Segurança:**
+    *   Testar se as políticas de RLS estão impedindo o acesso não autorizado aos dados de outros usuários.
 
-2.  **Lógica de Propriedade:**
-    - **Criar (`POST /prompt`):** Na lógica do endpoint (Function Stack), o campo `usuario_id` do novo registro deve ser preenchido com o ID do usuário autenticado (`auth.id`).
-    - **Listar (`GET /prompt`):** A query que busca os registros (`Query All Records`) deve ser filtrada para retornar apenas os prompts onde `prompt.usuario_id` é igual a `auth.id`.
-    - **Detalhe, Atualização e Deleção (`GET`, `PUT`, `DELETE` /prompt/{id}):** A query que busca o registro específico deve ter uma condição dupla: o `id` do prompt deve corresponder ao da URL **E** o `prompt.usuario_id` deve ser igual ao `auth.id`.
-
----
-
-### 4. Implementação do Lado do Cliente (Frontend)
-
-O frontend deve ser atualizado para se comunicar com o backend Xano e gerenciar o fluxo de autenticação.
-
-1.  **Fluxo de Autenticação:**
-    - Chame `POST /auth/signup` ou `POST /auth/login` para registrar/logar o usuário.
-    - Na resposta, extraia o `authToken`.
-
-2.  **Gerenciamento do Token:**
-    - Armazene o `authToken` de forma segura no cliente (ex: `localStorage`, `sessionStorage` ou armazenamento seguro móvel).
-
-3.  **Requisições Autenticadas:**
-    - Para todas as chamadas a endpoints protegidos, inclua o token no cabeçalho da requisição:
-      ```
-      Authorization: Bearer <seu_token_aqui>
-      ```
-
-4.  **Logout:**
-    - Implemente a função de logout removendo o `authToken` do armazenamento local do cliente.
