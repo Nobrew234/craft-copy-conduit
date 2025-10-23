@@ -25,6 +25,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/prompt/new" element={<PromptEditor />} />
             <Route path="/prompt/:id" element={<PromptDetail />} />
             <Route path="/prompt/:id/edit" element={<PromptEditor />} />
             <Route path="/profile" element={<Profile />} />
